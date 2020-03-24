@@ -1,0 +1,36 @@
+version: "3"
+services:
+  clickhouse:
+    image: yandex/clickhouse-server
+    ports:
+    - "8123:8123"
+    - "9000:9000"
+
+    ulimits:
+      nproc: 65535
+      nofile:
+       soft: 262144
+       hard: 262144
+
+  postgres:
+    image: postgres:9-alpine
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./airflow-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_ROOT_PASSWORD=root
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_USER=airflow
+      - POSTGRES_DB=airflow
+      - POSTGRES_INITDB_ARGS="--encoding=UTF8"
+
+  airflow:
+    build: ./airflow
+    ports:
+    - "8080:8080"
+    volumes:
+        - ./dags:/usr/local/airflow/dags
+        - ./tmp:/usr/local/airflow/tmp
+    links:
+      - postgres
